@@ -14,9 +14,9 @@ if __name__ == '__main__':
         description="A template for DISCOVER sections using bokeh server.",
         license="MIT",
         classifiers=["Programming Language :: Python"],
-        version="0.1.0",
+        version="0.1.1",
         install_requires=[
-            "bokeh>=0.13", "jsmol-bokeh-extension", "pandas", "sqlalchemy"
+            "jsmol-bokeh-extension>=0.2", "pandas", "sqlalchemy"
         ],
         extras_require={
             "pre-commit": [
