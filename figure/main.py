@@ -17,8 +17,8 @@ from config import quantities, presets
 from figure.query import get_data_sqla as get_data
 from figure.query import data_empty
 
-html = bmd.Div(
-    text=open(join(config.static_dir, "description.html")).read(), width=800)
+html = bmd.Div(text=open(join(config.static_dir, "description.html")).read(),
+               width=800)
 
 redraw_plot = False
 
@@ -92,8 +92,8 @@ plot_options = [(q, quantities[q]['label']) for q in config.plot_quantities]
 inp_x = Select(title='X', options=plot_options)
 inp_y = Select(title='Y', options=plot_options)
 #inp_clr = Select(title='Color', options=plot_options)
-inp_clr = Select(
-    title='Color', options=plot_options + [('bond_type', 'Bond type')])
+inp_clr = Select(title='Color',
+                 options=plot_options + [('bond_type', 'Bond type')])
 
 
 def on_filter_change(attr, old, new):  # pylint: disable=unused-argument
@@ -106,8 +106,11 @@ def on_filter_change(attr, old, new):  # pylint: disable=unused-argument
 def get_slider(desc, range, default=None):
     if default is None:
         default = range
-    slider = RangeSlider(
-        title=desc, start=range[0], end=range[1], value=default, step=0.1)
+    slider = RangeSlider(title=desc,
+                         start=range[0],
+                         end=range[1],
+                         value=default,
+                         step=0.1)
 
     slider.on_change('value', on_filter_change)
     return slider
@@ -116,10 +119,10 @@ def get_slider(desc, range, default=None):
 def get_select(desc, values, default=None, labels=None):  # pylint: disable=unused-argument
     if default is None:
         # by default, make all selections active
-        default = range(len(values))
+        default = list(range(len(values)))
 
     if labels is None:
-        labels = map(str, values)
+        labels = list(map(str, values))
 
     # misuse tags to store values without mapping to str
     group = CheckboxButtonGroup(labels=labels, active=default, tags=values)
@@ -186,6 +189,8 @@ def create_plot():
         output_backend='webgl',
         title='',
         title_location='right',
+        lod_threshold=50,
+        lod_factor=100,
     )
     p_new.title.align = 'center'
     p_new.title.text_font_size = '10pt'
@@ -194,17 +199,17 @@ def create_plot():
     if inp_clr.value == 'bond_type':
         from bokeh.transform import factor_cmap
         paper_palette = list(config.bondtype_dict.values())
-        fill_color = factor_cmap(
-            'color', palette=paper_palette, factors=bondtypes)
-        p_new.circle(
-            'x',
-            'y',
-            size=10,
-            source=source,
-            fill_color=fill_color,
-            fill_alpha=0.6,
-            line_alpha=0.4,
-            legend='color')
+        fill_color = factor_cmap('color',
+                                 palette=paper_palette,
+                                 factors=bondtypes)
+        p_new.circle('x',
+                     'y',
+                     size=10,
+                     source=source,
+                     fill_color=fill_color,
+                     fill_alpha=0.6,
+                     line_alpha=0.4,
+                     legend='color')
 
     else:
         cmap = bmd.LinearColorMapper(palette=Viridis256)
@@ -342,11 +347,10 @@ inp_clr.on_change('value', on_change_clr)
 # Create a panel with a new layout
 sizing_mode = 'fixed'
 inputs = widgetbox(*controls, sizing_mode=sizing_mode)
-l = layout(
-    [
-        [inputs, p],
-        [info_block],
-    ], sizing_mode=sizing_mode)
+l = layout([
+    [inputs, p],
+    [info_block],
+], sizing_mode=sizing_mode)
 update()
 
 # Create each of the tabs

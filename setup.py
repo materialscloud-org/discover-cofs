@@ -6,24 +6,20 @@ from setuptools import setup
 if __name__ == '__main__':
     # Provide static information in setup.json
     # such that it can be discovered automatically
-    setup(packages=["detail", "figure"],
-          name="discover-cofs",
-          author="Leopold Talirz",
-          author_email="info@materialscloud.org",
-          description="A template for DISCOVER sections using bokeh server.",
-          license="MIT",
-          classifiers=["Programming Language :: Python"],
-          version="0.1.1",
-          install_requires=[
-              "bokeh~=1.3.4",
-              "jsmol-bokeh-extension~=0.2.1",
-              "pandas~=0.24.2",
-              "sqlalchemy~=1.0.19",
-              "requests~=2.21.0",
-          ],
-          extras_require={
-              "pre-commit": [
-                  "pre-commit==1.11.0", "yapf==0.24.0", "prospector==0.12.11",
-                  "pylint==1.9.3"
-              ]
-          })
+    setup(
+        packages=["detail", "figure"],
+        name="discover-cofs",
+        author="Leopold Talirz",
+        author_email="info@materialscloud.org",
+        description="bokeh application for COF discover section",
+        license="MIT",
+        classifiers=["Programming Language :: Python"],
+        version="0.1.1",
+        install_requires=[
+            "bokeh~=1.3.4",
+            "jsmol-bokeh-extension~=0.2.1",
+            "pandas~=1.3.1",
+            "sqlalchemy~=1.3.0",
+            "requests~=2.26.0",
+        ],
+        extras_require={"pre-commit": ["pre-commit~=2.2.0", "pylint~=2.6.0"]})
