@@ -25,8 +25,10 @@ columns_json = {}
 
 
 def parse_csv(path):
-    data = pd.read_csv(
-        path, low_memory=False, verbose=1, skipinitialspace=True)
+    data = pd.read_csv(path,
+                       low_memory=False,
+                       verbose=1,
+                       skipinitialspace=True)
     print("Read {} data rows from .csv file".format(len(data)))
     return data
 
@@ -64,16 +66,15 @@ def to_sql_k(self,
                 raise ValueError('The type of %s is not a SQLAlchemy '
                                  'type ' % col)
 
-    table = pd.io.sql.SQLTable(
-        name,
-        self,
-        frame=frame,
-        index=index,
-        if_exists=if_exists,
-        index_label=index_label,
-        schema=schema,
-        dtype=dtype,
-        **kwargs)
+    table = pd.io.sql.SQLTable(name,
+                               self,
+                               frame=frame,
+                               index=index,
+                               if_exists=if_exists,
+                               index_label=index_label,
+                               schema=schema,
+                               dtype=dtype,
+                               **kwargs)
     table.create()
     table.insert(chunksize)
 
@@ -107,14 +108,13 @@ def rename_columns(data):
 def fill_db():
     #data.to_sql(table_name, con=engine, if_exists='replace')
     print("Filling database")
-    to_sql_k(
-        pandas_sql,
-        data,
-        table_name,
-        index=True,
-        index_label='id',
-        keys='id',
-        if_exists='replace')
+    to_sql_k(pandas_sql,
+             data,
+             table_name,
+             index=True,
+             index_label='id',
+             keys='id',
+             if_exists='replace')
 
     with engine.connect() as con:
         test = pd.read_sql("SELECT * FROM {} LIMIT 5".format(table_name), con)
@@ -123,12 +123,12 @@ def fill_db():
 
 def automap_table(engine):
     """Try to infer model from Database.
-    
+
     This currently does not work because
       1. sqlalchemy can only automap tables with a primary key
       2. pd.to_sql cannot create tables with a primary key
       3. sqlite does not allow table structure to be modified after creation
-      
+
     See https://stackoverflow.com/a/35397969/1069467 for workarounds
     """
     from sqlalchemy.ext.automap import automap_base
