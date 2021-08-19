@@ -17,7 +17,7 @@ Using
 ```
 pip install -e .     # install python dependencies
 ./prepare.sh         # download the data (run only once)
-bokeh serve --show figure detail   # run app
+bokeh serve figure detail select-figure   # run app
 ```
 
 ## Configuration

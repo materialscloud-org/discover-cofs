@@ -28,6 +28,8 @@ def get_preset_label_from_url():
     args = curdoc().session_context.request.arguments
     try:
         preset_label = args.get('preset')[0]
+        if isinstance(preset_label, bytes):
+            preset_label = preset_label.decode()
     except (TypeError, KeyError):
         preset_label = 'default'
 
@@ -103,10 +105,10 @@ def on_filter_change(attr, old, new):  # pylint: disable=unused-argument
 
 # range sliders
 # pylint: disable=redefined-builtin
-def get_slider(desc, range, default=None):
+def get_slider(description, range, default=None):
     if default is None:
         default = range
-    slider = RangeSlider(title=desc,
+    slider = RangeSlider(title=description,
                          start=range[0],
                          end=range[1],
                          value=default,
@@ -116,7 +118,7 @@ def get_slider(desc, range, default=None):
     return slider
 
 
-def get_select(desc, values, default=None, labels=None):  # pylint: disable=unused-argument
+def get_select(description, values, default=None, labels=None):  # pylint: disable=unused-argument
     if default is None:
         # by default, make all selections active
         default = list(range(len(values)))
@@ -320,7 +322,6 @@ def update():
     update_legends(l)
     plot_info.text += " done!"
     btn_plot.button_type = 'success'
-    return
 
 
 btn_plot.on_click(update)
