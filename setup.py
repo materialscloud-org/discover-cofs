@@ -21,5 +21,6 @@ if __name__ == '__main__':
             "pandas~=1.3.1",
             "sqlalchemy~=1.3.0",
             "requests~=2.26.0",
+            "jinja2<3.1"
         ],
         extras_require={"pre-commit": ["pre-commit~=2.2.0", "pylint~=2.6.0"]})

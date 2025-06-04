@@ -3,3 +3,6 @@
 .DS_Store
 *.pyc
 *.egg-info
+detail/static/jsm*
+screening_data.tar.gz
+.vscode/settings.json
