@@ -16,9 +16,8 @@ rm -r jmol-14.29.22
 
 # Download data
 cd data/
-wget https://archive.materialscloud.org/record/file?record_id=28&filename=structures.tgz
-wget https://archive.materialscloud.org/record/file?record_id=28&filename=properties.tgz
-
+wget "https://archive.materialscloud.org/record/file?record_id=28&filename=structures.tgz" -O structures.tgz
+wget "https://archive.materialscloud.org/record/file?record_id=28&filename=properties.tgz" -O properties.tgz
 # Extract data
 tar xf structures.tgz && rm structures.tgz && \
     tar xf properties.tgz && rm properties.tgz

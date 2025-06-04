@@ -5,10 +5,7 @@ from os.path import join, dirname
 static_dir = join(dirname(__file__), "static")
 
 with open(join(static_dir, "columns.yml"), 'r') as f:
-    try:
-        quantity_list = yaml.load(f)
-    except TypeError:
-        quantity_list = yaml.safe_load(f)
+    quantity_list = yaml.safe_load(f)
 
 quantities = collections.OrderedDict([(q['column'], q) for q in quantity_list])
 
@@ -25,17 +22,9 @@ bondtype_dict = collections.OrderedDict([
 ])
 
 with open(join(static_dir, "filters.yml"), 'r') as f:
-    try:
-        filter_list = yaml.load(f)
-    except TypeError:
-        filter_list = yaml.safe_load(f)
+    filter_list = yaml.safe_load(f)
 
 with open(join(static_dir, "presets.yml"), 'r') as f:
-    try:
-        presets = yaml.load(f)
-    except TypeError:
-        presets = yaml.safe_load(f)
-
     presets = yaml.safe_load(f)
 
 for k in presets.keys():
