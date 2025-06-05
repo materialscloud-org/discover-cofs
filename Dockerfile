@@ -1,4 +1,7 @@
-FROM python:3.7
+# NOTE: There is some extra preparation needed before building this image,
+# e.g. data download & preparation. See README.
+
+FROM python:3.7-slim
 
 # Install recent nodejs for bokeh & jsmol-bokeh-extension
 # See https://github.com/nodesource/distributions/blob/master/README.md#installation-instructions
@@ -6,6 +9,8 @@ RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt-get update && apt-get install -y --no-install-recommends \
   nodejs \
   graphviz \
+  wget \
+  unzip \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get clean all
 
@@ -25,13 +30,16 @@ COPY setup.py import_db.py ./
 RUN pip install -e .
 COPY serve-app.sh /opt/
 
+# Copy the data directly to into the image:
+COPY data ./data
+
 #RUN chown -R scientist:scientist /project
 #USER scientist
 
 # This environment variable can be changed at build time:
 #   docker build  --build-arg BOKEH_PREFIX=/abc
-ARG BOKEH_PREFIX="abc"
-ENV BOKEH_PREFIX $BOKEH_PREFIX
+ARG BOKEH_PREFIX=""
+ENV BOKEH_PREFIX=$BOKEH_PREFIX
 
 # start bokeh server
 EXPOSE 5006
