@@ -5,6 +5,7 @@ from os.path import dirname, join
 from copy import copy
 from collections import OrderedDict
 import json
+import os
 
 from bokeh.layouts import layout, widgetbox
 import bokeh.models as bmd
@@ -90,7 +91,8 @@ def table_widget(entry):
 cof_name = get_name_from_url()
 entry = get_data(cof_name, plot_info)
 
-os_url = "https://object.cscs.ch/v1/AUTH_b1d80408b3d340db9f03d373bbde5c1e/discover-cofs/structures/structures"
+#os_url = "https://object.cscs.ch/v1/AUTH_b1d80408b3d340db9f03d373bbde5c1e/discover-cofs/structures/structures"
+local_url = "./data/structures"
 
 
 def get_cif_content_from_os(filename):
@@ -102,8 +104,17 @@ def get_cif_content_from_os(filename):
     return data.content.decode()
 
 
+def get_cif_content_from_local(filename):
+    """Load CIF content from a local file."""
+    print(os.getcwd())
+    path = os.path.join(local_url, filename)
+    print(path)
+    with open(path, 'r', encoding='utf-8') as file:
+        return file.read()    
+
 #cif_str = get_cif_content(entry.filename)
-cif_str = get_cif_content_from_os(entry.filename)
+#cif_str = get_cif_content_from_os(entry.filename)
+cif_str = get_cif_content_from_local(entry.filename)
 
 
 def get_cif_url(filename):

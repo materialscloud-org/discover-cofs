@@ -42,7 +42,7 @@ The plots can be configured using a few YAML files:
 ```
 pip install -e .
 ./prepare.sh
-docker-compose build
-docker-compose up
+docker compose build
+docker compose up
 # open http://localhost:3245/cofs/select-figure
 ```

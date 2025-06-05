@@ -3,17 +3,12 @@ version: '2'
 services:
   bokeh:
     restart: always
-    build:
-      context: .
-      args:
-        BOKEH_PREFIX: /cofs
-    image: discover-cofs:master
-    command: ["/opt/serve-app.sh"]
-    environment:
-      PYTHONPATH: '/project'
-      SHELL: '/bin/bash'
-
-    volumes:
-     - './data:/project/discover-cofs/data'
+    build: .
+    image: discover-cofs:latest
+    
+    # Data is copied into the image at build time, so the following is not needed.
+    # volumes:
+    #  - './data:/project/discover-cofs/data'
+    
     ports:
       - '3245:5006'
