@@ -18,9 +18,15 @@ Output (public/data/):
      "columns":    {"density": [...], ...},                numeric columns
      "categories": {"bond_type": {"values": [...], "codes": [...]}, ...}}
   Floats are rounded to 5 decimal places, here and in the details.
-- details/<xxx>.json, xxx = three hex digits of shard_of(name) (SHARDS files):
-    {"<name>": {"properties": {"<column> [<unit>]": value, ...}, "cif": "..."}}
+- details/<xxx>.json.gz, xxx = hex digits of shard_of(name) (SHARDS files),
+  gzipped JSON (the app unpacks it with the browser's DecompressionStream):
+    {"<name>": {"properties": {"<column> [<unit>]": value, ...}, "cif": "<the archive's CIF>"}}
   properties holds all 53 CSV columns, keys sorted, floats rounded as above.
+  cif is the archive's file as it is (the app parses it with matsci-parse and
+  offers it unchanged as the CIF download). Gzipped, the CIFs are a third of
+  their text (about 1.1 GB for all COFs); converting them to matsci-parse JSON
+  would save only ~13% more and lose what matsci-parse does not read
+  (labels, charges and bonds, which other apps' CIFs have).
 
 shard_of is FNV-1a (32 bit) over the UTF-8 bytes of the name, modulo SHARDS;
 src/common/data.js has the same function (tests/ compares them on fixed names).
@@ -40,6 +46,7 @@ Decisions (data here, and src/CofsExplorer/config.js, against the old app):
 """
 
 import csv
+import gzip
 import hashlib
 import io
 import json
@@ -47,6 +54,7 @@ import math
 import os
 import re
 import shutil
+from concurrent.futures import ThreadPoolExecutor
 import sys
 import tarfile
 import urllib.request
@@ -59,7 +67,7 @@ RECORD = "1mb1g-5gm52"
 API = f"https://archive.materialscloud.org/api/records/{RECORD}/files"
 NEEDED = ["properties.tgz", "structures.tgz"]
 
-SHARDS = 1024
+SHARDS = 16384
 MAX_FILE_BYTES = 25 * 1024 * 1024  # Cloudflare Pages limit per file
 MAX_FILES = 20000  # ... and per deployment
 EXPECTED_ROWS = 69840
@@ -101,7 +109,9 @@ def column_key(label):
     unit_regex = re.compile(r"\[(.*?)\]")
     match = unit_regex.search(label)
     if match:
-        return unit_regex.sub("", label).strip().replace(" ", "_"), match.group(1).strip()
+        return unit_regex.sub("", label).strip().replace(" ", "_"), match.group(
+            1
+        ).strip()
     return label.replace(" ", "_"), None
 
 
@@ -131,7 +141,10 @@ def fetch_raw(verify):
         if name in missing:
             print(f"downloading {name} ...")
             part = path + ".part"
-            with urllib.request.urlopen(f"{API}/{name}/content") as response, open(part, "wb") as out:
+            with (
+                urllib.request.urlopen(f"{API}/{name}/content") as response,
+                open(part, "wb") as out,
+            ):
                 shutil.copyfileobj(response, out, 1 << 20)
             os.replace(part, path)
         if md5_of(path) != sums[name]:
@@ -150,8 +163,24 @@ def read_properties():
         rows = list(reader)
     keyed = [column_key(h) for h in header]
     keys = [k for k, _ in keyed]
-    assert len(set(zip(keys, [u for _, u in keyed]))) == len(keys), "duplicate (key, unit)"
+    assert len(set(zip(keys, [u for _, u in keyed]))) == len(keys), (
+        "duplicate (key, unit)"
+    )
     return keys, [u for _, u in keyed], rows
+
+
+SHARDS_PER_JOB = 64  # shards per job (~270 COFs); the jobs run in parallel
+GZIP_LEVEL = 6  # level 9: 3x slower for 4% smaller files
+
+
+def write_shards(first, names_by_shard, cifs, properties):
+    """shards first .. first + SHARDS_PER_JOB - 1, written gzipped; returns {shard: number of entries}"""
+    counts = {}
+    for i in range(first, min(first + SHARDS_PER_JOB, SHARDS)):
+        entries = {n: {"properties": properties(n), "cif": cifs[n]} for n in names_by_shard[i]}
+        write_text_gz(os.path.join(OUT, "details", f"{i:03x}.json.gz"), json.dumps(entries, separators=(",", ":")))
+        counts[i] = len(entries)
+    return counts
 
 
 def read_cifs():
@@ -159,13 +188,19 @@ def read_cifs():
     with tarfile.open(os.path.join(RAW, "structures.tgz")) as tar:
         for member in tar:
             base = os.path.basename(member.name)
-            if not member.isfile() or base.startswith("._") or not base.endswith(".cif"):
+            if (
+                not member.isfile()
+                or base.startswith("._")
+                or not base.endswith(".cif")
+            ):
                 continue
             cifs[base[: -len(".cif")]] = tar.extractfile(member).read().decode("utf-8")
     return cifs
 
 
-DECIMALS = 5  # the smallest non-zero value in the CSV is 0.0025: >= 3 significant digits kept
+DECIMALS = (
+    5  # the smallest non-zero value in the CSV is 0.0025: >= 3 significant digits kept
+)
 
 
 def number(text):
@@ -182,6 +217,17 @@ def number(text):
 def write_json(path, value):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(value, f, separators=(",", ":"))
+
+
+def write_text_gz(path, text):
+    # mtime=0 and no file name in the header: the same bytes every run
+    with open(path, "wb") as raw, gzip.GzipFile(filename="", fileobj=raw, mode="wb", compresslevel=GZIP_LEVEL, mtime=0) as f:
+        f.write(text.encode("utf-8"))
+
+
+def read_json_gz(path):
+    with gzip.open(path, "rb") as f:
+        return json.loads(f.read().decode("utf-8"))
 
 
 def build_table(keys, units, rows):
@@ -208,7 +254,12 @@ def build_table(keys, units, rows):
                 "codes": [where[v] for v in raw],
             }
     names = [r[keys.index("name")] for r in rows]
-    return {"n": len(rows), "names": names, "columns": columns, "categories": categories}
+    return {
+        "n": len(rows),
+        "names": names,
+        "columns": columns,
+        "categories": categories,
+    }
 
 
 def detail_properties(keys, units, row):
@@ -237,40 +288,53 @@ def main():
     table = build_table(keys, units, rows)
     write_json(os.path.join(OUT, "table.json"), table)
 
-    shards = [{} for _ in range(SHARDS)]
-    # sorted by name: the output does not depend on the CSV order
+    # sorted by name within a shard: the output does not depend on the CSV order
     by_name = {r[name_col]: r for r in rows}
+    names_by_shard = [[] for _ in range(SHARDS)]
     for name in sorted(by_name):
-        shards[shard_of(name)][name] = {
-            "properties": detail_properties(keys, units, by_name[name]),
-            "cif": cifs[name],
-        }
-    for i, shard in enumerate(shards):
-        write_json(os.path.join(OUT, "details", f"{i:03x}.json"), shard)
+        names_by_shard[shard_of(name)].append(name)
+    properties = lambda n: detail_properties(keys, units, by_name[n])  # noqa: E731
+    counts = {}
+    # threads: the compression (zlib) runs outside Python's lock
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+        jobs = [pool.submit(write_shards, first, names_by_shard, cifs, properties) for first in range(0, SHARDS, SHARDS_PER_JOB)]
+        for job in jobs:
+            counts.update(job.result())
+            print(f"  details: {len(counts)} of {SHARDS} shards", end="\r", flush=True)
+    print()
 
-    # self-check, from the files as written
+    # self-check, from the files as written: every shard there, sizes; a sample read in full
     files = [os.path.join(d, f) for d, _, fs in os.walk(OUT) for f in fs]
     sizes = [os.path.getsize(f) for f in files]
     assert len(files) == SHARDS + 1 and len(files) < MAX_FILES
     assert max(sizes) < MAX_FILE_BYTES, f"file over 25 MiB: {max(sizes)}"
-    count = 0
-    for i in range(SHARDS):
-        with open(os.path.join(OUT, "details", f"{i:03x}.json"), encoding="utf-8") as f:
-            shard = json.load(f)
-        assert all(shard_of(n) == i and v["cif"].strip() and len(v["properties"]) == len(keys) for n, v in shard.items())
-        count += len(shard)
-    assert count == EXPECTED_ROWS
+    assert sum(counts.values()) == EXPECTED_ROWS
+    for i in range(0, SHARDS, 97):
+        shard = read_json_gz(os.path.join(OUT, "details", f"{i:03x}.json.gz"))
+        assert len(shard) == counts[i] and all(
+            shard_of(n) == i
+            and "_cell_length_a" in v["cif"]
+            and len(v["properties"]) == len(keys)
+            for n, v in shard.items()
+        ), f"shard {i:03x}"
     with open(os.path.join(OUT, "table.json"), encoding="utf-8") as f:
         t = json.load(f)
     assert t["n"] == len(t["names"]) == EXPECTED_ROWS
     assert all(len(c) == EXPECTED_ROWS for c in t["columns"].values())
     assert all(len(c["codes"]) == EXPECTED_ROWS for c in t["categories"].values())
 
-    shard_sizes = [os.path.getsize(os.path.join(OUT, "details", f"{i:03x}.json")) for i in range(SHARDS)]
+    shard_sizes = [
+        os.path.getsize(os.path.join(OUT, "details", f"{i:03x}.json.gz"))
+        for i in range(SHARDS)
+    ]
     mib = 1024 * 1024
     print(f"public/data/: {len(files)} files, {sum(sizes) / mib:.0f} MiB")
-    print(f"  table.json: {os.path.getsize(os.path.join(OUT, 'table.json')) / mib:.1f} MiB")
-    print(f"  details/: {SHARDS} shards, {min(shard_sizes) / mib:.1f} to {max(shard_sizes) / mib:.1f} MiB")
+    print(
+        f"  table.json: {os.path.getsize(os.path.join(OUT, 'table.json')) / mib:.1f} MiB"
+    )
+    print(
+        f"  details/: {SHARDS} shards, {min(shard_sizes) / mib:.1f} to {max(shard_sizes) / mib:.1f} MiB"
+    )
 
 
 if __name__ == "__main__":

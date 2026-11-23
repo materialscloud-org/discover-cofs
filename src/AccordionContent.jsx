@@ -1,6 +1,5 @@
 // The information accordions of the home page.
-import { useState } from "react";
-import { DoiBadge, McInfoAccordion } from "mc-react-library";
+import { DoiBadge, McInfoAccordions } from "mc-react-library";
 
 function AboutContent() {
   return (
@@ -38,10 +37,5 @@ const ACCORDIONS = [
 
 /** The information accordions, one open at a time. */
 export default function InfoAccordions() {
-  const [open, setOpen] = useState(null);
-  return ACCORDIONS.map(({ title, content }, i) => (
-    <McInfoAccordion key={title} title={title} open={open === i} onToggle={() => setOpen(open === i ? null : i)}>
-      {content}
-    </McInfoAccordion>
-  ));
+  return <McInfoAccordions items={ACCORDIONS} />;
 }

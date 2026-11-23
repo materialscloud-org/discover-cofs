@@ -18,16 +18,25 @@ A static Vite/React site (routes `/`, `/figure?preset=`, `/detail/<name>`).
 
 - **Data**: `scripts/prepareForFrontend.py` reads the archive's tarballs and
   writes `public/data/` (no database): `table.json` for the scatter plot and
-  1024 shards of per-COF properties + CIF (see README). 69,840 COFs, 1,025
-  files, 3.6 GB (the CIFs are 3.5 GB as text), not committed, unlike the
-  sibling apps' smaller data, because of its size.
+  16384 gzipped shards of per-COF properties + the archive's CIF (see
+  README). 69,840 COFs, 16,385 files, 1.2 GB (the CIF text alone was 3.5 GB),
+  about 1 minute; not committed, unlike the sibling apps' smaller data.
+  Converting the CIFs to matsci-parse JSON would save only ~13% and lose what
+  matsci-parse does not read (labels, charges, bonds), so they stay CIFs.
 - **Plot**: plotly `scattergl` (WebGL). Filters apply live (no "Plot"
   button). Same defaults as the old app: colours of the bond types from
   `figure/config.py`, Viridis with a colorbar for numbers, hover with name, x,
   y, colour, click opens the COF.
-- **COF page**: matsci-parse `fromCIF` and mc-react-structure-visualizer
-  instead of JSmol; the table (sorted, units in the key) and both downloads
-  work on the same data.
+- **COF page**: the CIF parsed with matsci-parse `fromCIF` and shown with
+  mc-react-structure-visualizer instead of JSmol; a download menu over it
+  (mc-react-library `DownloadDropdown`): "CIF (raw)", the archive's file as it
+  is, with everything in it (in other apps' CIFs also partial charges, under
+  program-specific tags, labels and bonds), and XSF, XYZ, VASP written by
+  matsci-parse (cell, elements and positions only); the property table
+  (sorted, units in the key) and its JSON download.
+- **Old URLs** of the section (`/discover/cofs/...`) are redirected outside
+  the app; here `/select-figure` goes to `/` and `/detail?name=` to
+  `/detail/<name>`.
 - **`src/common/`** is generic and config-driven for the four sibling apps;
   `src/CofsExplorer/config.js` holds this app's YAML as JS.
 
@@ -60,7 +69,6 @@ Documented in the docstring of `scripts/prepareForFrontend.py`:
 
 - The "Plot" button and the "doubly selected" warning (X, Y, colour equal).
 - Bokeh's toolbar: plotly's own (zoom, pan, reset, camera) replaces it.
-- The point limit (`max_points` = 70,000) was not reached by the data (69,840).
 - JSmol (replaced by mc-react-structure-visualizer: other controls, no JSmol
   menu), the Dockerfile and sqlite backend (kept in `legacy-python/`).
 
@@ -68,19 +76,19 @@ Documented in the docstring of `scripts/prepareForFrontend.py`:
 
 `pnpm test`: `tests/data.test.mjs` (shard hash, also against the Python
 function; presets with defaults, inheritance, unknown keys, consistency with
-the config; filters; colours; the plotly figure and colorbar title wrapping;
-property rows) and `tests/public-data.test.mjs` (shape of `public/data/`;
-skipped if it has not been generated).
+the config; filters, missing values; colours; the plotly figure and colorbar
+title wrapping; property rows) and `tests/public-data.test.mjs` (shape of
+`public/data/`; three of the archive's CIFs in `tests/fixtures/` stored
+unchanged and read by matsci-parse; skipped if the data has not been
+generated).
 
 ## Open questions
 
-1. Is a 3.6 GB deployment acceptable? Alternative: gzip the shards ahead
-   (about 1.2 GB, a third) and decompress them in the browser
-   (`DecompressionStream`).
-2. "How to cite" links 10.24435/materialscloud:cz-kq, which resolves to the
+1. "How to cite" links 10.24435/materialscloud:cz-kq, which resolves to the
    CURATED-COFs record (`1xf71-nf390`), not this data (2018.0003/v2,
    `1mb1g-5gm52`). Which DOI / paper should it cite?
-3. `mc-react-structure-visualizer` uses `eval` (the build warns); with no
-   `mc-periodic-table` 0.2 in this app, autowannier's patch is not needed.
-4. Old URLs of the section (`/discover/cofs/...`) are redirected elsewhere,
-   except `/select-figure` and `/detail?name=` handled here.
+
+## Library notes
+
+- `mc-react-structure-visualizer` uses `eval` (the build warns); with no
+  `mc-periodic-table` 0.2 in this app, autowannier's patch is not needed.

@@ -33,9 +33,11 @@ test("shard hash: fixed names (same values as the Python script)", () => {
   for (const [name, shard] of Object.entries(expected)) assert.equal(shardOf(name, 1024), shard, name);
   assert.equal(fnv1a32(""), 0x811c9dc5);
   assert.equal(fnv1a32("a"), 0xe40c292c); // the FNV-1a test vector
-  assert.equal(shardFile("linker100_CH_linker41_N_umc_relaxed_interp_3", 1024), "details/000.json");
-  assert.equal(shardFile("linker91_CO_linker87_NH_hcb_relaxed", 1024), "details/1cb.json");
+  assert.equal(shardFile("linker100_CH_linker41_N_umc_relaxed_interp_3", 1024), "details/000.json.gz");
+  assert.equal(shardFile("linker91_CO_linker87_NH_hcb_relaxed", 1024), "details/1cb.json.gz");
   assert.equal(shardFile("é", 1024), shardFile("é", 1024)); // UTF-8, not UTF-16 units
+  // no shard count: one file per entry
+  assert.equal(shardFile("EDUVOO", undefined), "details/EDUVOO.json.gz");
 });
 
 test("shard hash agrees with scripts/prepareForFrontend.py", (t) => {
@@ -113,6 +115,16 @@ test("filters: ranges, lists, full selections do not filter", () => {
   assert.deepEqual(f({ bond_type: ["imine", "CC"] }), [1, 2, 3]);
   assert.deepEqual(f({ bond_type: [] }), []);
   assert.deepEqual(f({ dimensions: [3], bond_type: ["imine"], deliverable_capacity: [175, 300] }), [1, 2]);
+});
+
+test("filters: missing values", () => {
+  const t = { n: 3, columns: { density: [100, null, 300], surface_area: [1, 2, null] }, categories: table.categories };
+  const all = resolvePreset(config, "default").filters;
+  const f = (patch, required) => filterIndices(t, config, { ...all, deliverable_capacity: [0, 300], dimensions: [2, 3], bond_type: config.columns[1].values, ...patch }, required);
+  assert.deepEqual(f({}), [0, 1, 2]); // untouched filters keep missing values
+  assert.deepEqual(f({ density: [0, 1000] }), [0, 2]); // an active filter does not
+  assert.deepEqual(f({}, ["density", "surface_area"]), [0]); // the plotted columns must be there
+  assert.deepEqual(f({}, ["bond_type"]), [0, 1, 2]); // list columns are never missing
 });
 
 test("colours: bond types and continuous", () => {

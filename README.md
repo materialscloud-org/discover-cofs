@@ -18,30 +18,35 @@ decisions are documented in `scripts/prepareForFrontend.py`).
   without `preset`); the plot updates as the filters change. Click on a point
   for its page.
 - **COF** (`/detail/<name>`): the 3D structure (matsci-parse and
-  mc-react-structure-visualizer), the table of all its properties, "Download cif"
-  and "Download json".
+  mc-react-structure-visualizer) with a download menu in its top-right corner
+  (mc-react-library's `DownloadDropdown`: "CIF (raw)", the archive's file as
+  it is, and XSF, XYZ, VASP written by matsci-parse), the table of all its
+  properties and "Download json".
 
 ## Data
 
 `public/data/` is generated, from the original archive files, by one script
-(Python standard library only), and is not committed (3.6 GB):
+(Python standard library only), and is not committed (1.2 GB):
 
 ```bash
-python3 scripts/prepareForFrontend.py           # about 1 minute
+python3 scripts/prepareForFrontend.py           # about 1 minute, ~4 GB memory
 python3 scripts/prepareForFrontend.py --verify  # also check the md5 of raw/ against the archive
 ```
 
 It downloads `properties.tgz` and `structures.tgz` into `raw/` if they are
 missing (from the archive API, md5 checked), reads them without extracting,
-replaces `public/data/` and checks the result (row count, a CIF for every COF,
-file sizes under Cloudflare Pages' 25 MiB, fewer than 20,000 files).
+replaces `public/data/` and checks the result (row count, every shard there,
+a sample read in full, file sizes under Cloudflare Pages' 25 MiB, fewer than
+20,000 files).
 
-- `table.json` (8.7 MiB): for the scatter plot, one entry per COF: names, the
-  numeric columns (rounded to 7 digits), and the list columns (`bond_type`,
+- `table.json` (9 MiB): for the scatter plot, one entry per COF: names, the
+  numeric columns (5 decimals), and the list columns (`bond_type`,
   `dimensions`) as codes with a list of values.
-- `details/<xxx>.json` (1024 shards, 2.3 to 5.4 MiB): per COF, all 53 CSV
-  properties (keys `<column> [<unit>]`) and the CIF text. A COF is in shard
-  `fnv1a32(utf8(name)) % 1024` (three hex digits), the same function in
+- `details/<xxx>.json.gz` (16384 gzipped shards): per COF, all
+  53 CSV properties (keys `<column> [<unit>]`) and the archive's CIF as it is.
+  The app unpacks a shard with the browser's `DecompressionStream` and parses
+  the CIF with matsci-parse (`fromCIF`). A COF is in shard
+  `fnv1a32(utf8(name)) % 16384` (hex), the same function in
   `scripts/prepareForFrontend.py` (`shard_of`) and `src/common/data.js`.
 
 The columns keep the naming of the old `import_db.py` (`[unit]` removed,
@@ -54,7 +59,7 @@ pnpm install
 pnpm dev        # http://localhost:5173 (needs public/data/, see Data)
 pnpm test       # node --test tests/*.test.mjs
 pnpm lint
-pnpm build      # static site in dist/ (copies public/data/: 3.6 GB)
+pnpm build      # static site in dist/ (copies public/data/: 1.2 GB)
 ```
 
 Deployment: Cloudflare Pages, `pnpm build`, output `dist/`; Pages serves
@@ -71,7 +76,7 @@ src/
   common/               generic, config-driven (copy it for the sibling apps):
                         data.js (shards, filters, presets, colours; pure),
                         figure.js (plotly figure; pure), Explorer, ScatterPlot
-                        (plotly scattergl), DualRangeSlider, CheckboxGroup,
+                        (plotly scattergl), CheckboxGroup,
                         Gallery, DetailView (StructureView, PropertyTable,
                         download buttons), queries.js, api.js, Common.jsx
 public/images/          the preset thumbnails

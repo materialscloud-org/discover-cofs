@@ -11,17 +11,29 @@ export function Loading() {
 }
 
 export function Failed({ error }) {
-  return <p className="py-4 text-red-700">Could not load the data: {String(error?.message ?? error)}</p>;
+  return (
+    <p className="py-4 text-red-700">
+      Could not load the data: {String(error?.message ?? error)}
+    </p>
+  );
 }
 
 const BUTTON =
   "inline-block rounded bg-[#337ab7] px-3 py-1 text-sm text-white hover:bg-[#286090] hover:text-white hover:no-underline";
 
 /** a button that saves `text` as a file in the browser */
-export function DownloadButton({ filename, text, mime = "text/plain", children }) {
+export function DownloadButton({
+  filename,
+  text,
+  mime = "text/plain",
+  children,
+}) {
   const save = () => {
     const url = URL.createObjectURL(new Blob([text], { type: mime }));
-    const link = Object.assign(document.createElement("a"), { href: url, download: filename });
+    const link = Object.assign(document.createElement("a"), {
+      href: url,
+      download: filename,
+    });
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -32,7 +44,6 @@ export function DownloadButton({ filename, text, mime = "text/plain", children }
   );
 }
 
-/** Lucide "arrow-left" (ISC licence), inlined */
 const ArrowLeft = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

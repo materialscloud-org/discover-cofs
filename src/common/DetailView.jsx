@@ -1,9 +1,9 @@
-// The page of one COF: structure (with the CIF download), property table (with the JSON download).
+// The page of one entry: structure (with the CIF download), property table (with the JSON download).
+import { PropertyTable } from "mc-react-library";
 import { lazy, Suspense } from "react";
 
 import { Failed, DownloadButton, Loading } from "./Common.jsx";
 import { propertiesJson } from "./data.js";
-import PropertyTable from "./PropertyTable.jsx";
 import { useDetail } from "./queries.js";
 
 // the viewer (3Dmol, matsci-parse) is loaded when the first structure is shown
@@ -13,16 +13,13 @@ export default function DetailView({ name, shardCount }) {
   const { data, error, isPending } = useDetail(name, shardCount);
   if (isPending) return <Loading />;
   if (error) return <Failed error={error} />;
-  if (!data) return <p className="py-4">No matching COF found: {name}</p>;
+  if (!data) return <p className="py-4">Nothing found with the name {name}.</p>;
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="min-w-0 space-y-2">
+      <div className="min-w-0">
         <Suspense fallback={<Loading />}>
-          <StructureView cif={data.cif} />
+          <StructureView name={name} cif={data.cif} />
         </Suspense>
-        <DownloadButton filename={`${name}.cif`} text={data.cif}>
-          Download cif
-        </DownloadButton>
       </div>
       <div className="min-w-0 space-y-2">
         <PropertyTable properties={data.properties} />

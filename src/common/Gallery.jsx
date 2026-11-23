@@ -16,8 +16,13 @@ function Figure({ to, image, label, caption }) {
     <figure className="space-y-1 text-center">
       {/* the title over the image on hover, as on the old page */}
       <Link to={to} title={label} className="group relative block">
-        <img src={`${IMAGES}${image}.png`} alt={label} className="mx-auto w-full rounded shadow" />
-        <span className="absolute inset-0 flex items-center justify-center rounded bg-black/50 text-xl font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+        <img
+          src={`${IMAGES}${image}.png`}
+          alt={label}
+          className="mx-auto w-full rounded shadow"
+        />
+        {/*figure title on hover  Blue with white bg*/}
+        <span className="absolute inset-0 flex items-center justify-center rounded bg-white/70 text-xl font-bold text-blue opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
           {label}
         </span>
       </Link>
@@ -40,7 +45,7 @@ export default function Gallery({ config }) {
         Click on a figure for the <b>interactive plot</b>.
       </p>
       {/* rows of 1 (the default figure), then 3, 3, 1: centred flex rows, items a third wide */}
-      <div className="flex justify-center">
+      <div className="flex justify-center px-20">
         <div className={ITEM}>
           <Figure
             to="/figure"

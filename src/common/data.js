@@ -13,8 +13,16 @@ export function fnv1a32(text) {
 
 export const shardOf = (name, shardCount) => fnv1a32(name) % shardCount;
 
-/** the file of the shard of `name`, relative to data/ */
-export const shardFile = (name, shardCount) => `details/${shardOf(name, shardCount).toString(16).padStart(3, "0")}.json`;
+/**
+ * The file holding `name`, relative to data/: {"<name>": {...}}. With a
+ * shardCount, the entries share shard files (only when one file per entry
+ * would be too many for the deployment, Cloudflare Pages: 20,000); without
+ * one, every entry has its own file (names: letters, digits, ".", "_", "-").
+ */
+export const shardFile = (name, shardCount) =>
+  shardCount
+    ? `details/${shardOf(name, shardCount).toString(16).padStart(3, "0")}.json.gz`
+    : `details/${encodeURIComponent(name)}.json.gz`;
 
 export const quantity = (config, column) => config.columns.find((q) => q.column === column);
 
@@ -60,15 +68,21 @@ export function resolvePreset(config, requested) {
  * The rows that pass the filters, as an array of indices into the table.
  * As in the old app, a float filter at its full range and a list filter with
  * all values selected do not filter (so values outside the range stay in).
+ * Missing values (null) never pass an active float filter, and rows missing a
+ * value of the float columns `required` (the plotted ones) are left out.
  */
-export function filterIndices(table, config, filters) {
+export function filterIndices(table, config, filters, required = []) {
   const tests = [];
+  for (const column of required) {
+    const values = table.columns[column];
+    if (values) tests.push((i) => values[i] != null);
+  }
   for (const [column, selection] of Object.entries(filters)) {
     const q = quantity(config, column);
     if (q.type === "float") {
       if (selection[0] === q.range[0] && selection[1] === q.range[1]) continue;
       const values = table.columns[column];
-      tests.push((i) => values[i] >= selection[0] && values[i] <= selection[1]);
+      tests.push((i) => values[i] != null && values[i] >= selection[0] && values[i] <= selection[1]);
     } else {
       if (q.values.every((v) => selection.includes(v))) continue;
       const { values, codes } = table.categories[column];

@@ -1,11 +1,11 @@
 // The scatter plot page: X, Y and colour selectors, the filters, the plot.
 // Starts from a preset (see resolvePreset) and filters live.
 import { useMemo, useState } from "react";
+import { DualRangeSlider } from "mc-react-library";
 import { useNavigate } from "react-router-dom";
 
 import CheckboxGroup from "./CheckboxGroup.jsx";
 import { colorColumns, filterIndices, floatColumns, quantity, resolvePreset, withUnit } from "./data.js";
-import DualRangeSlider from "./DualRangeSlider.jsx";
 import { scatterFigure } from "./figure.js";
 import ScatterPlot from "./ScatterPlot.jsx";
 
@@ -36,12 +36,13 @@ export default function Explorer({ config, table, preset: requested }) {
   const set = (patch) => setState((s) => ({ ...s, ...patch }));
   const setFilter = (column, value) => set({ filters: { ...filters, [column]: value } });
 
-  const indices = useMemo(() => filterIndices(table, config, filters), [table, config, filters]);
+  // a point needs its x, y and (numeric) colour; table.columns has the float columns only
+  const indices = useMemo(() => filterIndices(table, config, filters, [x, y, clr]), [table, config, filters, x, y, clr]);
   const figure = useMemo(() => scatterFigure(table, config, { x, y, clr }, indices), [table, config, x, y, clr, indices]);
 
   return (
     <div className="flex flex-col gap-6 md:flex-row">
-      <div className="w-full shrink-0 space-y-4 md:w-80">
+      <div className="w-full shrink-0 space-y-4 md:w-96">
         <Select label="X" value={x} options={floatColumns(config)} onChange={(v) => set({ x: v })} />
         <Select label="Y" value={y} options={floatColumns(config)} onChange={(v) => set({ y: v })} />
         <Select label="Color" value={clr} options={colorColumns(config)} onChange={(v) => set({ clr: v })} />
@@ -52,7 +53,6 @@ export default function Explorer({ config, table, preset: requested }) {
             <div key={column} className="space-y-1">
               <span className="block text-sm font-semibold">{withUnit(q)}</span>
               <DualRangeSlider
-                label=""
                 value={filters[column]}
                 min={q.range[0]}
                 max={q.range[1]}

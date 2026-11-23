@@ -15,7 +15,7 @@
     "@tanstack/react-query": "^5.108.0",
     "matsci-parse": "0.18.24",
     "mc-react-header": "0.7.3",
-    "mc-react-library": "^0.7.12",
+    "mc-react-library": "^0.7.15",
     "mc-react-structure-visualizer": "^0.11.1",
     "plotly.js-gl2d-dist-min": "^4.3.0",
     "react": "^18.2.0",
