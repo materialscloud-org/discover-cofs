@@ -25,12 +25,11 @@ dist-ssr
 *.swp
 *.swo
 
-# The Python environment of the reference (legacy-python)
+# Python (scripts/)
 .venv
 __pycache__
 *.pyc
 *.egg-info
-legacy-python/detail/static/jsm*
 screening_data.tar.gz
 jmol.zip
 

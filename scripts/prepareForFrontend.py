@@ -31,7 +31,7 @@ Output (public/data/):
 shard_of is FNV-1a (32 bit) over the UTF-8 bytes of the name, modulo SHARDS;
 src/common/data.js has the same function (tests/ compares them on fixed names).
 
-Column keys follow the old legacy-python/import_db.py: "[unit]" removed, text
+Column keys follow the old app's import_db.py (commit d80c708): "[unit]" removed, text
 trimmed, spaces to "_", the unit kept separately.
 
 Decisions (data here, and src/CofsExplorer/config.js, against the old app):

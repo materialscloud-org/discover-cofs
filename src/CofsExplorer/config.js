@@ -1,4 +1,4 @@
-// The configuration of this app: legacy-python/figure/static/{columns,filters,presets}.yml,
+// The configuration of this app: the old app's figure/static/{columns,filters,presets}.yml (commit d80c708),
 // figure/config.py (bond type colours) and select-figure/main.py (captions)
 // as one object, in the format src/common/ reads. The other apps of the family
 // (MOFs, ...) replace this file and the data.

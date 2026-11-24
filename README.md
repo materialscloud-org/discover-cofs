@@ -7,14 +7,14 @@ Data: [doi:10.24435/materialscloud:2018.0003/v2](https://doi.org/10.24435/materi
 (Materials Cloud Archive record `1mb1g-5gm52`).
 
 A static single-page app, the port of the Bokeh "discover-cofs" section of
-Materials Cloud (the old app is in [`legacy-python/`](legacy-python/); data
-decisions are documented in `scripts/prepareForFrontend.py`).
+Materials Cloud (the old app is commit [`d80c708`](https://github.com/materialscloud-org/discover-cofs/tree/d80c708) of this
+repository; data decisions are documented in `scripts/prepareForFrontend.py`).
 
 ## Development
 
 This app was migrated to a single page app, with the intention of providing users a serverless way to explore this data.
 
-The legacy software is saved in "legacy-python" with tools to containerize, however these may be out of date.
+The legacy software, with tools to containerize it (which may be out of date), is commit [`d80c708`](https://github.com/materialscloud-org/discover-cofs/tree/d80c708) of this repository.
 
 If you would like to launch the Single Page App locally:
 
