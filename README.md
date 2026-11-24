@@ -1,48 +1,38 @@
-# Materials Cloud Discover Section for Covalent Organic Frameworks
+# Covalent Organic Frameworks
 
-Using
+Interactive exploration of 69,840 in-silico 2D and 3D covalent organic
+frameworks (COFs) screened for methane storage: scatter plots of their computed
+properties, and a page with the structure and all properties of each COF.
+Data: [doi:10.24435/materialscloud:2018.0003/v2](https://doi.org/10.24435/materialscloud:2018.0003/v2)
+(Materials Cloud Archive record `1mb1g-5gm52`).
 
- * bokeh server
- * sqlite database backend
-   (AiiDA database backend in alpha)
- * jsmol for structure visualization
+A static single-page app, the port of the Bokeh "discover-cofs" section of
+Materials Cloud (the old app is commit [`d80c708`](https://github.com/materialscloud-org/discover-cofs/tree/d80c708) of this
+repository; data decisions are documented in `scripts/prepareForFrontend.py`).
 
-## Prerequisites
+## Development
 
- * python
- * nodejs >= 6
+This app was migrated to a single page app, with the intention of providing users a serverless way to explore this data.
 
-## Installation
+The legacy software, with tools to containerize it (which may be out of date), is commit [`d80c708`](https://github.com/materialscloud-org/discover-cofs/tree/d80c708) of this repository.
 
+If you would like to launch the Single Page App locally:
+
+```bash
+pnpm install
+python3 scripts/prepareForFrontend.py # about 1 minute, ~4 GB memory
+pnpm dev        # http://localhost:5173 (needs public/data/, see Data)
+pnpm test       # node --test tests/*.test.mjs
+pnpm lint
+pnpm build      # static site in dist/ (copies public/data/: 1.2 GB)
 ```
-pip install -e .     # install python dependencies
-./prepare.sh         # download the data (run only once)
-bokeh serve figure detail select-figure   # run app
-```
 
-## Configuration
+## Deployment
 
-Feel free to adapt this app to your own needs:
+The app is currently deployed by hand to Cloudflare Pages with wrangler with no CI/CD, so changes have to be pushed to materialscloud cloudflare. This is because of the sharding strategy used and that the data is too large for git and comes from the Materials Cloud Archive.
 
-### Input data
- * a set of structures in `data/structures`
-   * Allowed file extensions: `cif`, `xyz`
- * a CSV file `data/properties.csv` with their properties
-   * has a column `name` whose value `<name>` links each row to a file in `structures/<name>.<extension>xyz`.
-
-### Plots
-
-The plots can be configured using a few YAML files:
- * `figure/columns.yml`: defines metadata for columns of CSV file
- * `figure/filters.yml`: defines filters available in plot
- * `figure/presets.yml`: defines presets for axis + filter settings
-
-## Docker
-
-```
-pip install -e .
-./prepare.sh
-docker compose build
-docker compose up
-# open http://localhost:3245/cofs/select-figure
+```bash
+python3 scripts/prepareForFrontend.py  # if data is missing
+pnpm build
+npx wrangler pages deploy dist --project-name discover-cofs
 ```
