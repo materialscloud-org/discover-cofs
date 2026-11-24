@@ -19,7 +19,7 @@ export function Failed({ error }) {
 }
 
 const BUTTON =
-  "inline-block rounded bg-[#337ab7] px-3 py-1 text-sm text-white hover:bg-[#286090] hover:text-white hover:no-underline";
+  "inline-block rounded bg-[#0d6efd] px-3 py-1 text-sm text-white hover:bg-[#0b5ed7] hover:text-white hover:no-underline"; // as mc-react-library's DownloadDropdown
 
 /** a button that saves `text` as a file in the browser */
 export function DownloadButton({

@@ -23,7 +23,7 @@ function HowToCiteContent() {
     <p>
       Please find the appropriate journal reference in{" "}
       <span className="inline-block align-middle">
-        <DoiBadge doi_id="cz-kq" label="Data DOI" />
+        <DoiBadge doi_id="2018.0003/v2" label="Data DOI" />
       </span>
       .
     </p>

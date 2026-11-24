@@ -14,7 +14,8 @@ export const config = {
   dois: ["10.24435/materialscloud:2018.0003/v2"],
   shardCount: SHARD_COUNT,
 
-  // type "float": a numeric column (a plot axis, a colour, a range filter);
+  // type "float": a numeric column (a plot axis, a colour, a range filter;
+  //   optional `step`, the filter slider's step, default 0.1);
   // type "list": a column of a few values (a checkbox filter)
   columns: [
     {

@@ -56,7 +56,7 @@ export default function Explorer({ config, table, preset: requested }) {
                 value={filters[column]}
                 min={q.range[0]}
                 max={q.range[1]}
-                step={0.1}
+                step={q.step ?? 0.1}
                 onChange={(v) => setFilter(column, v)}
               />
             </div>
